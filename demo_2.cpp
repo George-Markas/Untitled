@@ -1,14 +1,33 @@
 #include <string>
 #include <utility>
 #include <iostream>
+#include <list>
 
 using namespace std;
+
+class Subject {
+    private:
+        string password;
+        string subjectName;
+        unsigned int weekHours;
+        bool season; // 0 = Winter, 1 = Summer
+
+    public:
+        // Generic constructor, to be used in Student class.
+        Subject(string password, string subjectName, unsigned int weekHours, bool season) {
+            this->password = std::move(password);
+            this->subjectName = std::move(subjectName);
+            this->weekHours = weekHours;
+            this->season = season;
+        }
+};
 
 class Student {
     private:
         char * registerNumber;
         string fullName;
         unsigned int semester;
+        list<Subject> subjectList;
 
     public:
         /* Setters */
@@ -67,13 +86,12 @@ class Student {
         void operator-=(unsigned int decrement) {
             semester -= decrement;
         }
+
+        void operator+=(::nullptr_t) {
+            subjectList.push_front(Subject()) {
+        }
 };
 
 int main () {
-    char sample_register[8] = "2239000";
-    string sample_name = "John Doe";
 
-    Student Sample_1(sample_register, sample_name);
-    Sample_1.setFullName("Mpekos");
-    Sample_1.attributePrint();
 }
