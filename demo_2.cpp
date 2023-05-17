@@ -20,6 +20,23 @@ class Subject {
             this->weekHours = weekHours;
             this->season = season;
         }
+
+        /* Setters */
+        void setPassword(string password) {
+            this->password = std::move(password);
+        }
+
+        void setSubjectName(string subjectName) {
+            this->subjectName = std::move(subjectName);
+        }
+
+        void setWeekHours(unsigned int weekHours) {
+            this->weekHours = weekHours;
+        }
+
+        void setSeason(bool season) {
+            this->season = season;
+        }
 };
 
 class Student {
@@ -87,8 +104,9 @@ class Student {
             semester -= decrement;
         }
 
-        void operator+=(::nullptr_t) {
-            subjectList.push_front(Subject()) {
+        // Adding more subjects via this overloaded operator creates the object with generic info to be changed later.
+        void operator+=(Student const& object) {
+            subjectList.emplace_front("0", "newSubject", 0, false);
         }
 };
 
