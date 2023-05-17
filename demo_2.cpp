@@ -106,7 +106,7 @@ class Student {
 
         // Adding more subjects via this overloaded operator creates the object with generic info to be changed later.
         void operator+=(Student const& object) {
-            subjectList.emplace_front("0", "newSubject", 0, false);
+            subjectList.emplace_front("needsChanging", "newSubject", 0, false);
         }
 };
 
