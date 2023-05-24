@@ -14,20 +14,22 @@ class Subject {
 
     public:
         // Generic constructor, to be used in Student class.
-        Subject(string password, string subjectName, unsigned int weekHours, bool season) {
-            this->password = std::move(password);
-            this->subjectName = std::move(subjectName);
-            this->weekHours = weekHours;
-            this->season = season;
+        Subject() {
+            password = "needsSetting";
+            subjectName = "needsNaming";
+            weekHours = 0;
+            season = false;
         }
 };
+
+list <Subject> subjectDB; // Assuming this is already filled out with the available courses.
 
 class Student {
     private:
         char * registerNumber;
         string fullName;
         unsigned int semester;
-        list<Subject> subjectList;
+        list<pair<Subject*, int>> subjectList; // int Grade, pointer to subject in subjectDB
 
     public:
         /* Setters */
@@ -80,18 +82,73 @@ class Student {
             std::cout << "Register Number: " << registerNumber << " | Full Name: " << fullName << " | Semester: "<< semester;
         }
 
-        void operator+=(unsigned int increment) {
-            semester += increment;
-        }
-        void operator-=(unsigned int decrement) {
-            semester -= decrement;
+        void operator++() {
+            semester ++;
         }
 
-        void operator+=(::nullptr_t) {
-            subjectList.push_front(Subject()) {
+        void operator--() {
+            semester --;
+        }
+
+        void operator+=(unsigned int subjectNumber) {
+            for(int i = 0; i < subjectNumber; i++) {
+                subjectList.emplace_front();
+            }
+        }
+
+        bool operator==(unsigned int semesterNumber) const {
+            if (semester == semesterNumber) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        bool operator!=(unsigned int semesterNumber) const {
+            if (semester != semesterNumber) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        bool operator<(unsigned int semesterNumber) const {
+            if (semester < semesterNumber) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        bool operator>(unsigned int semesterNumber) const {
+            if (semester > semesterNumber) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+
+        bool operator<=(unsigned int semesterNumber) const {
+            if (semester <= semesterNumber) {
+                return true;
+            }
+            else {
+                return false;
+            }
+        }
+
+        bool operator>=(unsigned int semesterNumber) const {
+            if (semester >= semesterNumber) {
+                return true;
+            } else {
+                return false;
+            }
         }
 };
 
-int main () {
 
-}
