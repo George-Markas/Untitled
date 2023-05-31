@@ -22,7 +22,7 @@ class Subject {
         }
 };
 
-list <Subject> subjectDB; // Assuming this is already filled out with the available courses.
+//list <Subject> subjectDB; // Assuming this is already filled out with the available courses.
 
 class Student {
     private:
@@ -150,5 +150,11 @@ class Student {
             }
         }
 };
+
+int main () {
+    Subject OOP;
+    list <Subject> subjectDB;
+    subjectDB.emplace_front(OOP);
+}
 
 
