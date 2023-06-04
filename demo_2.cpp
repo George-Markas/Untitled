@@ -29,7 +29,7 @@ class Student {
         char * registerNumber;
         string fullName;
         unsigned int semester;
-        list <pair<Subject*, int>> subjectList; // int Grade, pointer to subject in subjectDB
+        list <pair<Subject*, int>> subjectList; // int Grade, vectorPtr to subject in subjectDB
 
     public:
         /* Setters */
