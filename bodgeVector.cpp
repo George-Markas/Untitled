@@ -3,7 +3,7 @@
 template <typename T> class MyVector {
     private:
         T *vectorPtr = nullptr;
-        unsigned int size{};
+        unsigned int size = 0;
         unsigned filledSlots;
 
     public:
