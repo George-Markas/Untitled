@@ -5,6 +5,7 @@
 #include <ctime>
 #include <cstdlib>
 //#include <random>
+#include <unistd.h>
 
 //using namespace std; // Nope.
 
@@ -118,7 +119,7 @@ int main() {
 
     Player Potter;
 
-    std::srand(std::time(nullptr));  // Generic seeding of the random number generator
+    std::srand(std::time(nullptr) + getpid() + 1337);  // Generic seeding of the random number generator
     std::vector<std::pair<int, int>> validPositions = Potter.getStartingPositions(maze);
     if (validPositions.empty()) {
         endwin();
@@ -162,5 +163,5 @@ int main() {
     }
 
     endwin(); // Clean up ncurses
-    return 0;
+    return(EXIT_SUCCESS);
 }
