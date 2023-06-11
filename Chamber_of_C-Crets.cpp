@@ -3,6 +3,8 @@
 #include <vector>
 #include <ncurses.h>
 #include <ctime>
+#include <cstdlib>
+//#include <random>
 
 //using namespace std; // Nope.
 
@@ -92,6 +94,7 @@ std::vector<std::vector<char>> readMazeLayout(const std::string& filename) {
 }
 
 int main() {
+
     std::string mazeFile;
     std::cout << "Enter the name of the maze layout file: ";
     std::cin >> mazeFile;
@@ -102,13 +105,15 @@ int main() {
     cbreak();   // Disable line buffering
     noecho();   // Don't display input characters
     curs_set(0); // Hiding cursor
+    nodelay(stdscr, true); // Don't wait for user input on getch() calls.
 
     init_pair(1, COLOR_RED, COLOR_BLACK);  // Defining color pair 1 (terminal dependant).
 
     std::vector<std::vector<char>> maze = readMazeLayout(mazeFile);
     if (maze.empty()) {
+        std::cout << "The file provided is empty!" << std::endl;
         endwin();
-        return 1;
+        return(EXIT_FAILURE);
     }
 
     Player Potter;
@@ -118,7 +123,7 @@ int main() {
     if (validPositions.empty()) {
         endwin();
         std::cerr << "No valid starting positions in the maze." << std::endl;
-        return 1;
+        return(EXIT_FAILURE);
     }
     std::pair<int, int> startingPosition = Potter.randomizeStart(validPositions);
     Potter.set_X(startingPosition.first);
@@ -126,9 +131,9 @@ int main() {
 
     traceMaze(maze, Potter);
 
-    int ch;
-    while ((ch = getch()) != 'q') {
-        switch (ch) {
+    int playerInput;
+    while ((playerInput = getch()) != 27 /* Esc in ASCII */) {
+        switch (playerInput) {
             case KEY_UP:
                 if (Potter.get_Y() > 0 && maze[Potter.get_Y() - 1][Potter.get_X()] != '*') {
                     Potter.set_Y(Potter.get_Y() - 1);
@@ -149,8 +154,10 @@ int main() {
                     Potter.set_X(Potter.get_X() + 1);
                 }
                 break;
+            case ' ':
+                break;
         }
-        clear();
+        erase();
         traceMaze(maze, Potter);
     }
 
