@@ -54,14 +54,22 @@ class Player {
         }
     };
 
+class Gem: public Player {
+
+};
+
 // Displaying character elements read from the maze layout file.
-void traceMaze(const std::vector<std::vector<char>>& maze, const Player& player) {
-    for (int i = 0; i < maze.size(); ++i) {
-        for (int j = 0; j < maze[i].size(); ++j) {
+void traceMaze(const std::vector<std::vector<char>>& maze, const Player& player, const Gem& gem) {
+    for(int i = 0; i < maze.size(); ++i) {
+        for(int j = 0; j < maze[i].size(); ++j) {
             if (i == player.get_Y() && j == player.get_X()) {
                 attron(COLOR_PAIR(1)); // Coloring the player sprite red.
                 addch('M');
                 attron(COLOR_PAIR(1));
+            } else if (i == gem.get_Y() && j == gem.get_X()) {
+                attron(COLOR_PAIR(2));  // Coloring the gem sprite green.
+                addch('G');
+                attroff(COLOR_PAIR(2));
             } else if (maze[i][j] == '*') {
                 addch(ACS_BLOCK); // Adding a block character for walls.
             } else if (maze[i][j] == '.') {
@@ -109,6 +117,7 @@ int main() {
     nodelay(stdscr, true); // Don't wait for user input on getch() calls.
 
     init_pair(1, COLOR_RED, COLOR_BLACK);  // Defining color pair 1 (terminal dependant).
+    init_pair(2, COLOR_GREEN, COLOR_BLACK); // Defining color pair 2...
 
     std::vector<std::vector<char>> maze = readMazeLayout(mazeFile);
     if (maze.empty()) {
@@ -130,28 +139,33 @@ int main() {
     Potter.set_X(startingPosition.first);
     Potter.set_Y(startingPosition.second);
 
-    traceMaze(maze, Potter);
+    Gem Philosopher_Stone;
+    startingPosition = Philosopher_Stone.randomizeStart(validPositions);
+    Philosopher_Stone.set_X(startingPosition.first);
+    Philosopher_Stone.set_Y(startingPosition.second);
+
+    traceMaze(maze, Potter, Philosopher_Stone);
 
     int playerInput;
     while ((playerInput = getch()) != 27 /* Esc in ASCII */) {
         switch (playerInput) {
             case KEY_UP:
-                if (Potter.get_Y() > 0 && maze[Potter.get_Y() - 1][Potter.get_X()] != '*') {
+                if(Potter.get_Y() > 0 && maze[Potter.get_Y() - 1][Potter.get_X()] != '*') {
                     Potter.set_Y(Potter.get_Y() - 1);
                 }
                 break;
             case KEY_DOWN:
-                if (Potter.get_Y() < maze.size() - 1 && maze[Potter.get_Y() + 1][Potter.get_X()] != '*') {
+                if(Potter.get_Y() < maze.size() - 1 && maze[Potter.get_Y() + 1][Potter.get_X()] != '*') {
                     Potter.set_Y(Potter.get_Y() + 1);
                 }
                 break;
             case KEY_LEFT:
-                if (Potter.get_X() > 0 && maze[Potter.get_Y()][Potter.get_X() - 1] != '*') {
+                if(Potter.get_X() > 0 && maze[Potter.get_Y()][Potter.get_X() - 1] != '*') {
                     Potter.set_X(Potter.get_X() - 1);
                 }
                 break;
             case KEY_RIGHT:
-                if (Potter.get_X() < maze[Potter.get_Y()].size() - 1 && maze[Potter.get_Y()][Potter.get_X() + 1] != '*') {
+                if(Potter.get_X() < maze[Potter.get_Y()].size() - 1 && maze[Potter.get_Y()][Potter.get_X() + 1] != '*') {
                     Potter.set_X(Potter.get_X() + 1);
                 }
                 break;
@@ -159,9 +173,15 @@ int main() {
                 break;
         }
         erase();
-        traceMaze(maze, Potter);
+        traceMaze(maze, Potter, Philosopher_Stone);
+        if((Potter.get_X() == Philosopher_Stone.get_X()) && (Potter.get_Y() == Philosopher_Stone.get_Y())) {
+            clear();
+            std::cout << "Teleportation commenced!";
+            endwin();
+            exit(EXIT_SUCCESS);
+        }
     }
 
-    endwin(); // Clean up ncurses
+    endwin();
     return(EXIT_SUCCESS);
 }
