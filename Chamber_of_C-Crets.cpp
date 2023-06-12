@@ -4,7 +4,7 @@
 #include <ncurses.h>
 #include <ctime>
 #include <cstdlib>
-//#include <random>
+#include <algorithm>
 #include <unistd.h>
 
 //using namespace std; // Nope.
@@ -52,7 +52,7 @@ class Player {
         void set_Y(int Y) {
             pos_Y = Y;
         }
-    };
+};
 
 class Gem: public Player {
 };
@@ -108,6 +108,99 @@ std::vector<std::vector<char>> readMazeLayout(const std::string& filename) {
     return maze;
 }
 
+bool isWithinBounds(int X, int Y, int Width, int Height) {
+    return X >= 0 && Y < Width && Y >= 0 && Y < Height;
+}
+
+std::vector<std::pair<int,int>> getAdjacentCells(const std::vector<std::vector<char>>& maze, const std::pair<int, int>& coords) {
+    std::vector<std::pair<int,int>> adjacentCells;
+    int x = coords.first;
+    int y = coords.second;
+
+    // Check left
+    if (x > 0 && maze[y][x - 1] != '*') {
+        adjacentCells.emplace_back( x - 1, y );
+    }
+
+    // Check right
+    if (x < maze[0].size() - 1 && maze[y][x + 1] != '*') {
+        adjacentCells.emplace_back( x + 1, y );
+    }
+
+    // Check up
+    if (y > 0 && maze[y - 1][x] != '*') {
+        adjacentCells.emplace_back( x, y - 1 );
+    }
+
+    // Check down
+    if (y < maze.size() - 1 && maze[y + 1][x] != '*') {
+        adjacentCells.emplace_back( x, y + 1 );
+    }
+
+    return adjacentCells;
+}
+
+bool isValidMove(const std::vector<std::vector<char>>& maze, int X, int Y) {
+    int Width = maze[0].size();
+    int Height = maze.size();
+    return isWithinBounds(X, Y, Width, Height) && maze[Y][X] != '*';
+}
+
+std::vector<std::pair<int,int>> findPath(const std::vector<std::vector<char>>& maze, const NPC& start, const Gem& gem) {
+    std::vector<std::pair<int, int>> path;
+    std::vector<std::vector<bool>> visited(maze.size(), std::vector<bool>(maze[0].size(), false));
+
+    std::vector<std::vector<std::pair<int, int>>> prev(maze.size(), std::vector<std::pair<int,int>>(maze[0].size(), { -1, -1 }));
+
+    std::vector<std::pair<int, int>> queue;
+    queue.emplace_back(start.get_X(), start.get_Y());
+    visited[start.get_X()][start.get_Y()] = true;
+
+    bool gemFound = false;
+    while(!queue.empty() && !gemFound) {
+        std::pair<int, int> current = queue.front();
+        queue.erase(queue.begin());
+
+        std::vector<std::pair<int, int>> adjacentCells = getAdjacentCells(maze, {current.first, current.second});
+        for(const auto& adjacentCell : adjacentCells) {
+            int new_X = adjacentCell.first;
+            int new_Y = adjacentCell.second;
+
+            if(!visited[new_Y][new_X]) {
+                queue.emplace_back(new_X, new_Y);
+                visited[new_Y][new_X] = true;
+                prev[new_Y][new_X] = {current.first, current.second};
+
+                if(new_X == gem.get_X() && new_Y == gem.get_Y()) {
+                     gemFound = true;
+                    break;
+                }
+            }
+        }
+    }
+
+    if(gemFound) {
+        std::pair<int, int> current = {gem.get_X(), gem.get_Y()};
+        while(current.first != start.get_X() || current.second != start.get_Y()) {
+            path.push_back(current);  // Convert current to Character
+            std::pair<int, int> prevCell = prev[current.second][current.first];
+            current.first = prevCell.first;
+            current.second = prevCell.second;
+        }
+        path.emplace_back(start.get_X(), start.get_Y());
+        std::reverse(path.begin(), path.end());
+    }
+
+    return path;
+}
+
+void updateNPC(NPC& npc, const std::vector<std::pair<int, int>>& path) {
+    if (!path.empty()) {
+        npc.set_X(path.back().first);
+        npc.set_Y(path.back().second);
+    }
+}
+
 int main() {
 
     std::string mazeFile;
@@ -148,12 +241,16 @@ int main() {
     Potter.set_Y(startingPosition.second);
 
     Gem Philosopher_Stone;
-    startingPosition = Philosopher_Stone.randomizeStart(validPositions);
+    while (Potter.get_X() == startingPosition.first && Potter.get_Y() == startingPosition.second) {
+        startingPosition = Philosopher_Stone.randomizeStart(validPositions);
+    }
     Philosopher_Stone.set_X(startingPosition.first);
     Philosopher_Stone.set_Y(startingPosition.second);
 
     NPC Malfoy;
-    startingPosition = Malfoy.randomizeStart(validPositions);
+    while (Malfoy.get_X() == startingPosition.first && Malfoy.get_Y() == startingPosition.second) {
+        startingPosition = Philosopher_Stone.randomizeStart(validPositions);
+    }
     Malfoy.set_X(startingPosition.first);
     Malfoy.set_Y(startingPosition.second);
 
@@ -162,44 +259,47 @@ int main() {
     int playerInput;
     while ((playerInput = getch()) != 27 /* Esc in ASCII */) {
         switch (playerInput) {
-            /* Collision checks */
             case KEY_UP:
-                if(Potter.get_Y() > 0 && maze[Potter.get_Y() - 1][Potter.get_X()] != '*') {
+                if (isValidMove(maze, Potter.get_X(), Potter.get_Y() - 1)) {
                     Potter.set_Y(Potter.get_Y() - 1);
+                    std::vector<std::pair<int, int>> path = findPath(maze, Malfoy, Philosopher_Stone);
+                    updateNPC(Malfoy, path);
                 }
                 break;
             case KEY_DOWN:
-                if(Potter.get_Y() < maze.size() - 1 && maze[Potter.get_Y() + 1][Potter.get_X()] != '*') {
+                if (isValidMove(maze, Potter.get_X(), Potter.get_Y() + 1)) {
                     Potter.set_Y(Potter.get_Y() + 1);
+                    std::vector<std::pair<int, int>> path = findPath(maze, Malfoy, Philosopher_Stone);
+                    updateNPC(Malfoy, path);
                 }
                 break;
             case KEY_LEFT:
-                if(Potter.get_X() > 0 && maze[Potter.get_Y()][Potter.get_X() - 1] != '*') {
+                if (isValidMove(maze, Potter.get_X() - 1, Potter.get_Y())) {
                     Potter.set_X(Potter.get_X() - 1);
+                    std::vector<std::pair<int, int>> path = findPath(maze, Malfoy, Philosopher_Stone);
+                    updateNPC(Malfoy, path);
                 }
                 break;
             case KEY_RIGHT:
-                if(Potter.get_X() < maze[Potter.get_Y()].size() - 1 && maze[Potter.get_Y()][Potter.get_X() + 1] != '*') {
+                if (isValidMove(maze, Potter.get_X() + 1, Potter.get_Y())) {
                     Potter.set_X(Potter.get_X() + 1);
+                    std::vector<std::pair<int, int>> path = findPath(maze, Malfoy, Philosopher_Stone);
+                    updateNPC(Malfoy, path);
                 }
                 break;
             case ' ':
+
                 break;
+        }
+        if ((Potter.get_X() == Philosopher_Stone.get_X()) && (Potter.get_Y() == Philosopher_Stone.get_Y())) {
+            endwin();
+            std::cout << "Teleportation commenced!";
+            exit(EXIT_SUCCESS);
         }
         erase();
         traceMaze(maze, Potter, Philosopher_Stone, Malfoy);
-        if((Potter.get_X() == Philosopher_Stone.get_X()) && (Potter.get_Y() == Philosopher_Stone.get_Y())) {
-            winCondition:
-            clear();
-            std::cout << "Teleportation commenced!";
-            endwin();
-            exit(EXIT_SUCCESS);
-        } else if((Malfoy.get_X() == Philosopher_Stone.get_X()) && (Malfoy.get_Y() == Philosopher_Stone.get_Y())) {
-            goto winCondition;
-        }
 
     }
 
-    endwin();
-    return(EXIT_SUCCESS);
+    return (EXIT_SUCCESS);
 }
