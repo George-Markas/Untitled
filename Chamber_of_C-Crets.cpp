@@ -55,24 +55,30 @@ class Player {
     };
 
 class Gem: public Player {
+};
 
+class NPC: public Player {
 };
 
 // Displaying character elements read from the maze layout file.
-void traceMaze(const std::vector<std::vector<char>>& maze, const Player& player, const Gem& gem) {
+void traceMaze(const std::vector<std::vector<char>>& maze, const Player& player, const Gem& gem, const NPC& npc) {
     for(int i = 0; i < maze.size(); ++i) {
         for(int j = 0; j < maze[i].size(); ++j) {
-            if (i == player.get_Y() && j == player.get_X()) {
+            if(i == player.get_Y() && j == player.get_X()) {
                 attron(COLOR_PAIR(1)); // Coloring the player sprite red.
                 addch('M');
                 attron(COLOR_PAIR(1));
-            } else if (i == gem.get_Y() && j == gem.get_X()) {
+            } else if(i == gem.get_Y() && j == gem.get_X()) {
                 attron(COLOR_PAIR(2));  // Coloring the gem sprite green.
                 addch('G');
                 attroff(COLOR_PAIR(2));
-            } else if (maze[i][j] == '*') {
+            } else if(i == npc.get_Y() && j == npc.get_X()) {
+                attron(COLOR_PAIR(3));
+                addch('L');
+                attroff(COLOR_PAIR(3));
+            } else if(maze[i][j] == '*') {
                 addch(ACS_BLOCK); // Adding a block character for walls.
-            } else if (maze[i][j] == '.') {
+            } else if(maze[i][j] == '.') {
                 addch(' '); // Adding a space for traversable space.
             } else {
                 addch(maze[i][j]);
@@ -117,7 +123,8 @@ int main() {
     nodelay(stdscr, true); // Don't wait for user input on getch() calls.
 
     init_pair(1, COLOR_RED, COLOR_BLACK);  // Defining color pair 1 (terminal dependant).
-    init_pair(2, COLOR_GREEN, COLOR_BLACK); // Defining color pair 2...
+    init_pair(2, COLOR_BLUE, COLOR_BLACK); // Defining color pair 2...
+    init_pair(3, COLOR_GREEN, COLOR_BLACK); // And so on...
 
     std::vector<std::vector<char>> maze = readMazeLayout(mazeFile);
     if (maze.empty()) {
@@ -135,6 +142,7 @@ int main() {
         std::cerr << "No valid starting positions in the maze." << std::endl;
         return(EXIT_FAILURE);
     }
+
     std::pair<int, int> startingPosition = Potter.randomizeStart(validPositions);
     Potter.set_X(startingPosition.first);
     Potter.set_Y(startingPosition.second);
@@ -144,11 +152,17 @@ int main() {
     Philosopher_Stone.set_X(startingPosition.first);
     Philosopher_Stone.set_Y(startingPosition.second);
 
-    traceMaze(maze, Potter, Philosopher_Stone);
+    NPC Malfoy;
+    startingPosition = Malfoy.randomizeStart(validPositions);
+    Malfoy.set_X(startingPosition.first);
+    Malfoy.set_Y(startingPosition.second);
+
+    traceMaze(maze, Potter, Philosopher_Stone, Malfoy);
 
     int playerInput;
     while ((playerInput = getch()) != 27 /* Esc in ASCII */) {
         switch (playerInput) {
+            /* Collision checks */
             case KEY_UP:
                 if(Potter.get_Y() > 0 && maze[Potter.get_Y() - 1][Potter.get_X()] != '*') {
                     Potter.set_Y(Potter.get_Y() - 1);
@@ -173,13 +187,17 @@ int main() {
                 break;
         }
         erase();
-        traceMaze(maze, Potter, Philosopher_Stone);
+        traceMaze(maze, Potter, Philosopher_Stone, Malfoy);
         if((Potter.get_X() == Philosopher_Stone.get_X()) && (Potter.get_Y() == Philosopher_Stone.get_Y())) {
+            winCondition:
             clear();
             std::cout << "Teleportation commenced!";
             endwin();
             exit(EXIT_SUCCESS);
+        } else if((Malfoy.get_X() == Philosopher_Stone.get_X()) && (Malfoy.get_Y() == Philosopher_Stone.get_Y())) {
+            goto winCondition;
         }
+
     }
 
     endwin();
