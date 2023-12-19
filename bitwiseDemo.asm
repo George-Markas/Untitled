@@ -66,8 +66,8 @@
 	    	
 		# printing the number of digits
 		li $v0, 1             
-        move $a0, $t1
-        syscall
+        	move $a0, $t1
+        	syscall
         
 		# program exit
 		li $v0, 10
